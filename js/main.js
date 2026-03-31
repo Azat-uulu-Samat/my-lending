@@ -85,6 +85,7 @@ $(document).ready(() => {
   const section = document.querySelector(".nomination-section");
   const blocks = section.querySelectorAll(".nomination-section__box-item");
 
+  // общие начальные состояния
   gsap.set(section, { backgroundColor: blocks[0].dataset.color });
   gsap.set(blocks, {
     position: "absolute",
@@ -96,6 +97,7 @@ $(document).ready(() => {
 
   let mm = gsap.matchMedia();
 
+  // ----------------- ДЕСКТОП -----------------
   // ----------------- ДЕСКТОП -----------------
   mm.add("(min-width: 576px)", () => {
     let tl = gsap.timeline({
@@ -150,90 +152,175 @@ $(document).ready(() => {
           "<"
         );
       } else {
-        // Последний блок — уезжает вверх сам, без следующего
+        // последний блок — уезжает вверх
         tl.to([contentLeft, subtitle, btn], { x: "-100vw", ease: "none" });
         tl.to(
           image,
           { y: () => -window.innerHeight - image.offsetHeight, ease: "none" },
           "<"
         );
+
+        // финальный быстрый переход к белому
+        tl.to(section, {
+          backgroundColor: "#ffffff",
+          duration: 0.1,
+          ease: "power1.in",
+        });
       }
     });
-
-    // Финальный белый экран
-    tl.to(section, { backgroundColor: "#ffffff", ease: "none" });
   });
 
   // ----------------- МОБИЛКА -----------------
   mm.add("(max-width: 575px)", () => {
-    let tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: section,
-        start: "top top",
-        end: () => "+=" + (blocks.length + 1) * window.innerHeight,
-        scrub: 1,
-        pin: true,
-        invalidateOnRefresh: true,
-      },
-    });
-
-    blocks.forEach((block, i) => {
+    // сбрасываем абсолютные позиции
+    gsap.set(blocks, { position: "relative", width: "100%", height: "auto" });
+    blocks.forEach((block) => {
       const contentLeft = block.querySelector(".nomination__content-left");
       const image = block.querySelector(".nomination__image");
       const subtitle = block.querySelector(".nomination__subtitle");
       const btn = block.querySelector(".nomination__btn");
 
+      gsap.set([contentLeft, subtitle, btn, image], { x: 0, y: 0 });
+    });
+
+    // анимация только цвета фона при скролле
+    blocks.forEach((block, i) => {
       const nextBlock = blocks[i + 1];
-
       if (nextBlock) {
-        const nextContentLeft = nextBlock.querySelector(
-          ".nomination__content-left"
-        );
-        const nextImage = nextBlock.querySelector(".nomination__image");
-        const nextSubtitle = nextBlock.querySelector(".nomination__subtitle");
-        const nextBtn = nextBlock.querySelector(".nomination__btn");
-
-        // старт следующего блока снизу
-        gsap.set([nextContentLeft, nextSubtitle, nextBtn], { y: "100vh" });
-        gsap.set(nextImage, {
-          y: () => window.innerHeight + nextImage.offsetHeight,
+        ScrollTrigger.create({
+          trigger: block,
+          start: "top center",
+          end: "bottom center",
+          onEnter: () =>
+            gsap.to(section, {
+              backgroundColor: nextBlock.dataset.color,
+              duration: 0.5,
+            }),
+          onEnterBack: () =>
+            gsap.to(section, {
+              backgroundColor: block.dataset.color,
+              duration: 0.5,
+            }),
         });
-
-        // текущий блок уходит вверх
-        tl.to([contentLeft, subtitle, btn], { y: "-148vh", ease: "none" });
-        tl.to(
-          image,
-          { y: () => -window.innerHeight - image.offsetHeight, ease: "none" },
-          "<"
-        );
-
-        // следующий появляется снизу
-        tl.to(
-          [nextContentLeft, nextSubtitle, nextBtn],
-          { y: 0, ease: "none" },
-          "-=0.3"
-        );
-        tl.to(nextImage, { y: 0, ease: "none" }, "<");
-
-        // фон
-        tl.to(
-          section,
-          { backgroundColor: nextBlock.dataset.color, ease: "none" },
-          "<"
-        );
-      } else {
-        // Последний блок — уезжает вверх сам
-        tl.to([contentLeft, subtitle, btn], { y: "-148vh", ease: "none" });
-        tl.to(
-          image,
-          { y: () => -window.innerHeight - image.offsetHeight, ease: "none" },
-          "<"
-        );
       }
     });
 
-    // Финальный белый экран
-    tl.to(section, { backgroundColor: "#ffffff", ease: "none" });
+    // стартовый цвет
+    gsap.to(section, { backgroundColor: blocks[0].dataset.color, duration: 0 });
+  });
+
+  // ---------------------------------------------------------ЭТАПЫ И СРОКИ--------------------------------------------------
+  if ($(window).width() > 575) {
+    gsap.registerPlugin(ScrollTrigger);
+
+    gsap.to(".steps__title", {
+      scale: 0.3, // насколько уменьшать (подбери)
+      ease: "none",
+      scrollTrigger: {
+        trigger: ".steps__title",
+        start: "top center", // когда верх блока доходит до центра экрана
+        end: "bottom top", // пока блок не выйдет вверх
+        scrub: true, // привязка к скроллу (плавно)
+      },
+    });
+  }
+
+  // -----------------------------------------------ПАРТНЕРЫ И ОРГАНИЗАТОРЫ-----------------------------------
+  gsap.registerPlugin(ScrollTrigger);
+
+  $(function () {
+    if (window.innerWidth < 575) return;
+
+    const section = document.querySelector(".partners-section");
+
+    const boxes = document.querySelectorAll(".partners__box");
+
+    const box1 = boxes[0];
+    const box2 = boxes[1];
+    const box3 = boxes[2];
+
+    const items1 = box1.querySelectorAll(".partners__wrap-item");
+    const items2 = box2.querySelectorAll(".partners__wrap-item");
+    const items3 = box3.querySelectorAll(".partners__wrap-item");
+
+    const title1 = box1.querySelector(".partners__box-title");
+    const title2 = box2.querySelector(".partners__box-title");
+    const title3 = box3.querySelector(".partners__box-title");
+
+    // 👉 начальные состояния
+    gsap.set([box2, box3], {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      width: "100%",
+    });
+
+    gsap.set(items2, { y: 200, opacity: 0 });
+    gsap.set(items3, { y: 200, opacity: 0 });
+
+    gsap.set(title2, { x: 200, opacity: 0 });
+    gsap.set(title3, { x: 200, opacity: 0 });
+
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: section,
+        start: "top top",
+        end: "+=300%", // 👈 увеличили под 2 перехода
+        scrub: true,
+        pin: true,
+      },
+    });
+
+    // =====================
+    // 🔥 1 → 2
+    // =====================
+
+    tl.to(items1, {
+      y: (i) => -150 - i * 80,
+      opacity: 0,
+      stagger: 0.15,
+      ease: "power3.out",
+    });
+
+    tl.to(title1, { x: "-50%", opacity: 0 }, "<");
+
+    tl.to(title2, { x: "0%", opacity: 1 }, "-=0.3");
+
+    tl.to(
+      items2,
+      {
+        y: (i) => -i * 60,
+        opacity: 1,
+        stagger: 0.15,
+        ease: "power3.out",
+      },
+      "<"
+    );
+
+    // =====================
+    // 🔥 2 → 3
+    // =====================
+
+    tl.to(items2, {
+      y: (i) => -150 - i * 80,
+      opacity: 0,
+      stagger: 0.15,
+      ease: "power3.out",
+    });
+
+    tl.to(title2, { x: "-50%", opacity: 0 }, "<");
+
+    tl.to(title3, { x: "0%", opacity: 1 }, "-=0.3");
+
+    tl.to(
+      items3,
+      {
+        y: (i) => -i * 60,
+        opacity: 1,
+        stagger: 0.15,
+      },
+      "<"
+    );
   });
   // ----------------------------------------------GSAP ANIMATION-----------------------------------------
   // Модальные окна
@@ -308,7 +395,7 @@ $(document).ready(() => {
     $("body, html").removeClass("my-body-noscroll-class");
     let target = $(this).attr("href");
     let targetPosition = $(target).offset().top - 30;
-    $("html, body").animate({ scrollTop: targetPosition }, 500);
+    $("html, body").animate({ scrollTop: targetPosition }, 2000);
     return false;
   });
 
@@ -358,13 +445,13 @@ $(document).ready(() => {
   //     ],
   // });
 
-  // $(".faq__item").click(function () {
-  //     $(this).siblings().removeClass("active");
-  //     $(this).siblings().find(".faq__item-content").slideUp();
+  $(".faq__item").click(function () {
+    $(this).siblings().removeClass("active");
+    $(this).siblings().find(".faq__item-content").slideUp();
 
-  //     $(this).toggleClass("active");
-  //     $(this).find(".faq__item-content").slideToggle();
-  // });
+    $(this).toggleClass("active");
+    $(this).find(".faq__item-content").slideToggle();
+  });
 
   // Табы - вкладки
   // $(".repairs__button").on("click", function () {
@@ -429,130 +516,101 @@ $(document).ready(() => {
 
   // -------------------------------------------------------------------------------------ТАБЫ--------------------------------------------------------------------
   $(function () {
-    $(".tabs__btn").on("click", function () {
-      const $btn = $(this);
+    $(".tabs").each(function () {
+      const $tabs = $(this);
 
-      // 👉 если уже активный — выходим
-      if ($btn.hasClass("active")) return;
+      $tabs.find(".tabs__btn").on("click", function () {
+        const $btn = $(this);
 
-      const tab = $btn.data("tab");
+        // если уже активный — ничего не делаем
+        if ($btn.hasClass("active")) return;
 
-      // кнопки
-      $(".tabs__btn").removeClass("active");
-      $btn.addClass("active");
+        const tab = $btn.data("tab");
 
-      // контент
-      const $current = $(".tabs__pane.active");
-      const $next = $(`.tabs__pane[data-tab="${tab}"]`);
+        const $current = $tabs.find(".tabs__pane.active");
+        const $next = $tabs.find(`.tabs__pane[data-tab="${tab}"]`);
 
-      $current.stop(true, true).fadeOut(200, function () {
-        $current.removeClass("active");
+        // переключаем кнопки ТОЛЬКО внутри блока
+        $tabs.find(".tabs__btn").removeClass("active");
+        $btn.addClass("active");
 
-        $next.fadeIn(200).addClass("active");
+        // переключаем контент ТОЛЬКО внутри блока
+        $current.stop(true, true).fadeOut(200, function () {
+          $current.removeClass("active");
+          $next.fadeIn(200, function () {
+            $next.addClass("active");
+            $next.find(".tabs__wrapper").trigger("horizontalSlider:tabVisible");
+          });
+        });
       });
     });
   });
 
-  // -------------------------------------------------------------------------------------СЛАЙДЕР--------------------------------------------------------------------------
+  // -------------------------------------------------------------------------------------СЛАЙДЕРЫ (горизонтальная прокрутка)--------------------------------------------------------------------------
   $(function () {
-    const $container = $(".cards-container");
-    const $cards = $(".card");
-    const $progress = $(".progress");
+    const wheelRegistrations = [];
+    let wheelListenerBound = false;
 
-    let isDown = false;
-    let startX = 0;
-    let currentTranslate = 0;
-    let prevTranslate = 0;
+    function onDocumentWheel(e) {
+      for (let i = 0; i < wheelRegistrations.length; i++) {
+        const reg = wheelRegistrations[i];
+        if (reg.mobileOnly && window.innerWidth > 575) continue;
 
-    const speed = 1.3; // чувствительность
+        const rect = reg.getWrapperRect();
+        if (rect.top > 1 || rect.bottom < 72) continue;
 
-    function getSizes() {
-      const cardWidth = $cards.outerWidth(true); // учитываем margin
-      const gap = parseFloat(getComputedStyle($container[0]).gap) || 0;
-      const step = cardWidth + gap;
+        const sizes = reg.getSizes();
+        if (sizes.maxTranslate <= 0) continue;
 
-      const visible = $(".cards-wrapper").outerWidth();
-      const totalWidth = step * $cards.length;
+        const t = reg.getTranslate();
+        const atStart = t >= -0.5;
+        const atEnd = t <= -sizes.maxTranslate + 0.5;
 
-      const maxTranslate = Math.max(totalWidth - visible, 0); // если карточек мало
+        if (e.deltaY > 0 && atEnd) continue;
+        if (e.deltaY < 0 && atStart) continue;
 
-      return { step, maxTranslate, visible, totalWidth };
+        if ((e.deltaY > 0 && !atEnd) || (e.deltaY < 0 && !atStart)) {
+          e.preventDefault();
+          reg.setTranslate(
+            Math.max(-sizes.maxTranslate, Math.min(0, t - e.deltaY * 0.72))
+          );
+          reg.update();
+          return;
+        }
+      }
     }
 
-    function update() {
-      const { maxTranslate, visible, totalWidth } = getSizes();
-
-      // ограничиваем слайдер
-      currentTranslate = Math.max(-maxTranslate, Math.min(0, currentTranslate));
-      $container.css("transform", `translateX(${currentTranslate}px)`);
-
-      // прогресс = сколько уже видимо + смещение
-      let basePercent = (visible / totalWidth) * 100;
-      let movedPercent = maxTranslate
-        ? (Math.abs(currentTranslate) / maxTranslate) * (100 - basePercent)
-        : 0;
-      let percent = basePercent + movedPercent;
-
-      $progress.css("width", percent + "%");
+    function bindDocumentWheel() {
+      if (wheelListenerBound) return;
+      wheelListenerBound = true;
+      document.addEventListener("wheel", onDocumentWheel, { passive: false });
     }
 
-    // стартовый прогресс
-    update();
+    function initHorizontalSlider(options) {
+      const {
+        $wrapper,
+        $container,
+        $progressInner,
+        $progressTrack,
+        speed = 1.2,
+        wheelLock = false,
+        mobileOnly = false,
+        getSizes: customGetSizes,
+        shouldUpdateProgress = () => true,
+      } = options;
 
-    // НАЖАЛ
-    $(".cards-wrapper").on("mousedown touchstart", function (e) {
-      isDown = true;
-      startX = e.pageX || e.originalEvent.touches[0].pageX;
-      prevTranslate = currentTranslate;
-    });
-
-    // ДВИГАЕМ
-    $(document).on("mousemove touchmove", function (e) {
-      if (!isDown) return;
-      if (e.type === "mousemove" && e.buttons !== 1) return;
-
-      const x = e.pageX || e.originalEvent.touches[0].pageX;
-      const diff = (x - startX) * speed;
-
-      currentTranslate = prevTranslate + diff;
-
-      update();
-    });
-
-    // ОТПУСТИЛ
-    $(document).on("mouseup touchend", function () {
-      isDown = false;
-    });
-
-    // ресайз фикс
-    $(window).on("resize", update);
-  });
-
-  // ---------------------------------------------------------------------------СЛАЙДЕР ПОБЕДИТЕЛЕЙ-----------------------------------------------------------------
-  $(function () {
-    function initWinnersSlider() {
-      if (window.innerWidth > 575) return;
-
-      const $wrapper = $(".winners__box");
-      const $container = $(".winners__container");
-      const $cards = $(".winners__item");
-      const $progress = $(".winners__progress-inner");
+      if (!$wrapper.length || !$container.length) return;
 
       let isDown = false;
       let startX = 0;
       let currentTranslate = 0;
       let prevTranslate = 0;
 
-      const speed = 1.2;
-
       function getSizes() {
+        if (customGetSizes) return customGetSizes();
         const visible = $wrapper.outerWidth();
-
-        // реальная ширина всего контента
         const totalWidth = $container[0].scrollWidth;
-
         const maxTranslate = Math.max(totalWidth - visible, 0);
-
         return { maxTranslate, visible, totalWidth };
       }
 
@@ -565,12 +623,18 @@ $(document).ready(() => {
         );
         $container.css("transform", `translateX(${currentTranslate}px)`);
 
-        let basePercent = (visible / totalWidth) * 100;
-        let movedPercent = maxTranslate
-          ? (Math.abs(currentTranslate) / maxTranslate) * (100 - basePercent)
-          : 0;
-
-        $progress.css("width", basePercent + movedPercent + "%");
+        if (
+          $progressInner &&
+          $progressInner.length &&
+          shouldUpdateProgress() &&
+          totalWidth > 0
+        ) {
+          const basePercent = (visible / totalWidth) * 100;
+          const movedPercent = maxTranslate
+            ? (Math.abs(currentTranslate) / maxTranslate) * (100 - basePercent)
+            : 0;
+          $progressInner.css("width", basePercent + movedPercent + "%");
+        }
       }
 
       update();
@@ -581,24 +645,185 @@ $(document).ready(() => {
         prevTranslate = currentTranslate;
       });
 
-      $(document).on("mousemove touchmove", function (e) {
-        if (!isDown) return;
-        if (e.type === "mousemove" && e.buttons !== 1) return;
+      $(document).on(
+        "mousemove.horizontalSlider touchmove.horizontalSlider",
+        function (e) {
+          if (!isDown) return;
+          if (e.type === "mousemove" && e.buttons !== 1) return;
 
-        const x = e.pageX || e.originalEvent.touches[0].pageX;
-        const diff = (x - startX) * speed;
+          const x = e.pageX || e.originalEvent.touches[0].pageX;
+          const diff = (x - startX) * speed;
 
-        currentTranslate = prevTranslate + diff;
+          currentTranslate = prevTranslate + diff;
+
+          update();
+        }
+      );
+
+      $(document).on(
+        "mouseup.horizontalSlider touchend.horizontalSlider",
+        function () {
+          isDown = false;
+        }
+      );
+
+      $(window).on("resize", update);
+
+      if ($progressTrack && $progressTrack.length) {
+        $progressTrack.on("click", function (e) {
+          if (!shouldUpdateProgress()) return;
+          const sizes = getSizes();
+          if (sizes.maxTranslate <= 0) return;
+          const rect = $progressTrack[0].getBoundingClientRect();
+          const ratio = (e.clientX - rect.left) / rect.width;
+          const clamped = Math.max(0, Math.min(1, ratio));
+          currentTranslate = -clamped * sizes.maxTranslate;
+          update();
+        });
+      }
+
+      $wrapper.on("horizontalSlider:tabVisible", function () {
         update();
       });
 
-      $(document).on("mouseup touchend", function () {
-        isDown = false;
-      });
-
-      $(window).on("resize", update);
+      if (wheelLock) {
+        bindDocumentWheel();
+        wheelRegistrations.push({
+          getWrapperRect: () => $wrapper[0].getBoundingClientRect(),
+          getSizes,
+          getTranslate: () => currentTranslate,
+          setTranslate: (v) => {
+            currentTranslate = v;
+          },
+          update,
+          mobileOnly,
+        });
+      }
     }
 
-    initWinnersSlider();
+    const $groupWrap = $(".group-section .cards-wrapper");
+    const $groupCont = $groupWrap.find(".cards-container");
+    const $groupCards = $groupCont.find(".card");
+
+    if ($groupWrap.length && $groupCont.length && $groupCards.length) {
+      initHorizontalSlider({
+        $wrapper: $groupWrap,
+        $container: $groupCont,
+        $progressInner: $groupWrap.find(".progress"),
+        $progressTrack: $groupWrap.find(".progress-bar"),
+        speed: 1.3,
+        wheelLock: true,
+        getSizes: () => {
+          const cardWidth = $groupCards.outerWidth(true);
+          const gap = parseFloat(getComputedStyle($groupCont[0]).gap) || 0;
+          const step = cardWidth + gap;
+          const visible = $groupWrap.outerWidth();
+          const totalWidth = step * $groupCards.length;
+          const maxTranslate = Math.max(totalWidth - visible, 0);
+          return { maxTranslate, visible, totalWidth };
+        },
+      });
+    }
+
+    if (window.innerWidth <= 575) {
+      $(".winners-section .winners__box").each(function () {
+        const $wrapper = $(this);
+        const $container = $wrapper.find(".winners__container");
+        initHorizontalSlider({
+          $wrapper,
+          $container,
+          $progressInner: $wrapper.find(".winners__progress-inner"),
+          $progressTrack: $wrapper.find(".winners__progress"),
+          speed: 1.2,
+          wheelLock: true,
+          mobileOnly: true,
+        });
+      });
+
+      const $nProgIn = $(".nominees-section .tabs__progress-inner");
+      const $nProgTrack = $(".nominees-section .tabs__progress");
+
+      $(".nominees-section .tabs__pane").each(function () {
+        const $pane = $(this);
+        const $wrapper = $pane.find(".tabs__wrapper");
+        const $container = $pane.find(".tabs__container");
+        initHorizontalSlider({
+          $wrapper,
+          $container,
+          $progressInner: $nProgIn,
+          $progressTrack: $nProgTrack,
+          speed: 1.2,
+          wheelLock: true,
+          mobileOnly: true,
+          shouldUpdateProgress: () => $pane.hasClass("active"),
+        });
+      });
+    }
   });
+
+  // -----------------------------------------------------------------ЭТАПЫ И СРОКИ-------------------------------------
+
+  if ($(window).width() > 575) {
+    $(function () {
+      const $container = $(".steps__container");
+      const $items = $(".steps__item");
+
+      let containerWidth = $container.width();
+      let itemsWidth = $items
+        .toArray()
+        .reduce((sum, el) => sum + $(el).outerWidth(true), 0);
+      let maxPercent = 0;
+
+      let targetPercent = 0;
+      let currentPercent = 0;
+      let isInside = false;
+
+      function updateSizes() {
+        containerWidth = $container.width();
+        itemsWidth = $items
+          .toArray()
+          .reduce((sum, el) => sum + $(el).outerWidth(true), 0);
+
+        // переводим в проценты относительно контейнера
+        maxPercent = Math.max(
+          ((itemsWidth - containerWidth) / containerWidth) * 100,
+          0
+        );
+      }
+
+      updateSizes();
+
+      $(window).on("resize", updateSizes);
+
+      $container.on("mouseenter", function () {
+        isInside = true;
+      });
+
+      $container.on("mouseleave", function () {
+        isInside = false;
+      });
+
+      $container.on("mousemove", function (e) {
+        if (!isInside || maxPercent <= 0) return;
+
+        let mouseX = e.pageX - $container.offset().left;
+        mouseX = Math.max(0, Math.min(mouseX, containerWidth));
+
+        let percent = mouseX / containerWidth; // 0..1
+        targetPercent = -maxPercent * percent;
+      });
+
+      function animate() {
+        currentPercent += (targetPercent - currentPercent) * 0.1;
+
+        // ограничение
+        currentPercent = Math.max(-maxPercent, Math.min(0, currentPercent));
+
+        $container.css("transform", `translateX(${currentPercent}%)`);
+        requestAnimationFrame(animate);
+      }
+
+      animate();
+    });
+  }
 });
